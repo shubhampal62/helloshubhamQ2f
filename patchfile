@@ -1,0 +1,71 @@
+diff -ruN old_linux-5.19.9/Makefile new_linux-5.19.9/Makefile
+--- old_linux-5.19.9/Makefile	2022-09-15 14:17:20.000000000 +0530
++++ new_linux-5.19.9/Makefile	2022-11-24 18:49:14.199946936 +0530
+@@ -1100,7 +1100,7 @@
+ export MODULES_NSDEPS := $(extmod_prefix)modules.nsdeps
+ 
+ ifeq ($(KBUILD_EXTMOD),)
+-core-y			+= kernel/ certs/ mm/ fs/ ipc/ security/ crypto/
++core-y			+= kernel/ certs/ mm/ fs/ ipc/ security/ crypto/ hello_syscall/ twomatrix_syscall/
+ core-$(CONFIG_BLOCK)	+= block/
+ core-$(CONFIG_IO_URING)	+= io_uring/
+ 
+diff -ruN old_linux-5.19.9/arch/x86/entry/syscalls/syscall_64.tbl new_linux-5.19.9/arch/x86/entry/syscalls/syscall_64.tbl
+--- old_linux-5.19.9/arch/x86/entry/syscalls/syscall_64.tbl	2022-09-15 14:17:20.000000000 +0530
++++ new_linux-5.19.9/arch/x86/entry/syscalls/syscall_64.tbl	2022-11-24 18:18:58.179971458 +0530
+@@ -372,6 +372,8 @@
+ 448	common	process_mrelease	sys_process_mrelease
+ 449	common	futex_waitv		sys_futex_waitv
+ 450	common	set_mempolicy_home_node	sys_set_mempolicy_home_node
++451	common	hello_system_call	sys_hello
++452	common	twod_system_call	sys_kernel_2d_memcpy
+ 
+ #
+ # Due to a historical design error, certain syscalls are numbered differently
+diff -ruN old_linux-5.19.9/hello_syscall/Makefile new_linux-5.19.9/hello_syscall/Makefile
+--- old_linux-5.19.9/hello_syscall/Makefile	1970-01-01 05:30:00.000000000 +0530
++++ new_linux-5.19.9/hello_syscall/Makefile	2022-11-24 18:41:43.179953026 +0530
+@@ -0,0 +1 @@
++obj-y := hello_syscall.o
+diff -ruN old_linux-5.19.9/hello_syscall/hello_syscall.c new_linux-5.19.9/hello_syscall/hello_syscall.c
+--- old_linux-5.19.9/hello_syscall/hello_syscall.c	1970-01-01 05:30:00.000000000 +0530
++++ new_linux-5.19.9/hello_syscall/hello_syscall.c	2022-11-24 18:41:18.789953355 +0530
+@@ -0,0 +1,8 @@
++#include <linux/kernel.h>
++#include <linux/syscalls.h>
++
++SYSCALL_DEFINE0(hello)
++{
++	printk(KERN_INFO "Invoked Hello System Call " );
++	return 0;
++}
+diff -ruN old_linux-5.19.9/twomatrix_syscall/Makefile new_linux-5.19.9/twomatrix_syscall/Makefile
+--- old_linux-5.19.9/twomatrix_syscall/Makefile	1970-01-01 05:30:00.000000000 +0530
++++ new_linux-5.19.9/twomatrix_syscall/Makefile	2022-11-24 18:47:46.989948113 +0530
+@@ -0,0 +1 @@
++obj-y := twodcall.o
+diff -ruN old_linux-5.19.9/twomatrix_syscall/twodcall.c new_linux-5.19.9/twomatrix_syscall/twodcall.c
+--- old_linux-5.19.9/twomatrix_syscall/twodcall.c	1970-01-01 05:30:00.000000000 +0530
++++ new_linux-5.19.9/twomatrix_syscall/twodcall.c	2022-11-24 18:47:10.199948610 +0530
+@@ -0,0 +1,21 @@
++#include <linux/kernel.h>
++#include <linux/syscalls.h>
++#include <linux/sched.h>
++#include <linux/errno.h>
++#include <linux/types.h>
++#include <linux/unistd.h>
++
++SYSCALL_DEFINE4(kernel_2d_memcpy,float * ,src,float *,dest,int,row,int,col){
++	float temp[row][col];
++	if (__copy_from_user(temp,src,sizeof(temp)))
++	{
++		return -EFAULT;
++	}
++	if (__copy_to_user(dest,temp,sizeof(temp)))
++	{
++		return -EFAULT;
++	}
++	printk(KERN_INFO "twod done");
++	return 0;
++}
++
